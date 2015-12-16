@@ -1,0 +1,3 @@
+[submodule "cpp-integration"]
+	path = cpp-integration
+	url = https://github.com/cp-profiler/cpp-integration
