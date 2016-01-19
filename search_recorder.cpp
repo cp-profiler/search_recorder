@@ -47,6 +47,43 @@ bool writeDelimitedTo(
   return true;
 }
 
+void printNode(message::Node& node) {
+    if (node.type() == message::Node::NODE) {
+        std::cout << std::left
+                  << "Node: "      << std::setw(8) << node.sid() << " " << std::setw(8) << node.pid()
+                  << " " << std::setw(2) << node.alt() << " " << node.kids() << " " << node.status()
+                  << "  thread: "  << std::setw(2) << node.thread_id()
+                  << "  restart: " << std::setw(2) << node.restart_id()
+            // << "  time: "    << std::setw(9) << node.time()
+                  << "  label: "   << std::setw(14) << node.label();
+        if (node.has_domain_size() && node.domain_size() > 0) {
+            std::cout << "  domain: "  << std::setw(6) << std::setprecision(4) << node.domain_size();
+        }
+        if (node.has_nogood() && node.nogood().length() > 0) {
+            std::cout << "  nogood: "  << node.nogood();
+        }
+        if (node.has_info() && node.info().length() > 0) {
+            std::cout << "info:\n"    << node.info() << std::endl;
+        }
+
+        std::cout << std::endl;
+
+        if (node.status() == 0) { /// solution!
+            std::cout << "-----solution-----\n";
+            std::cout << node.solution();
+            std::cout << "------------------\n";
+        }
+    }
+
+    if (node.type() == message::Node::DONE) {
+        std::cout << "Done receiving\n";
+    }
+
+    if (node.type() == message::Node::START) {
+        std::cout << "Start recieving, restart: " << node.restart_id() << " name: " << node.label() << " \n";
+    }
+}
+
 class tcp_connection : public boost::enable_shared_from_this<tcp_connection> {
 public:
     typedef boost::shared_ptr<tcp_connection> pointer;
@@ -73,7 +110,7 @@ public:
         }
         uint32_t* int32p = reinterpret_cast<uint32_t*>(buffer);
         len = *int32p;
-        if (len > 10000) abort();
+        if (len > 100000) abort();
         boost::asio::async_read(socket_,
                                 boost::asio::buffer(buffer, len),
                                 boost::bind(&tcp_connection::handle_read_body, shared_from_this(),
@@ -85,6 +122,9 @@ public:
         message::Node node;
         node.ParseFromArray(buffer, len);
         writeDelimitedTo(node, &raw_output_);
+        
+        printNode(node);
+
         if (node.type() == message::Node::DONE)
             socket_.get_io_service().stop();
         else
@@ -97,7 +137,7 @@ private:
     { }
 
     tcp::socket socket_;
-    char buffer[10000];
+    char buffer[100000];
     int len;
     OstreamOutputStream& raw_output_;
 };

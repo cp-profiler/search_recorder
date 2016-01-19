@@ -1,7 +1,7 @@
 OBJS = search_recorder.o message.pb.o
 CC = g++
 DEBUG = -g
-CFLAGS = -std=c++0x -W -Wall -c $(DEBUG)
+CFLAGS = -std=c++0x -W -Wall -c $(DEBUG) -O3
 LFLAGS = `pkg-config --cflags --libs protobuf` -lboost_system
 
 search_recorder: $(OBJS)
